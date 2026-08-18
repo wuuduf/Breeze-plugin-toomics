@@ -31,7 +31,8 @@ export async function getReadSnapshot(
 ): Promise<ReadSnapshotContract> {
   const extern = toStringMap(payload.extern);
   const comicId = String(payload.comicId ?? "").trim();
-  const codeId = String(payload.chapterId ?? extern.codeId ?? "").trim();
+  const chapterIdRaw = String(payload.requestId ?? payload.chapterId ?? extern.codeId ?? "").trim();
+  const codeId = chapterIdRaw.split("-")[0].trim();
   if (!comicId || !codeId) throw new Error("comicId/chapterId 不能为空");
 
   const { images, epTitle, epNum, isVip } = await fetchChapterContent(comicId, codeId);
@@ -64,7 +65,8 @@ export async function getChapter(
 ): Promise<ChapterContentContract> {
   const extern = toStringMap(payload.extern);
   const comicId = String(payload.comicId ?? "").trim();
-  const codeId = String(payload.chapterId ?? extern.codeId ?? "").trim();
+  const chapterIdRaw = String(payload.requestId ?? payload.chapterId ?? extern.codeId ?? "").trim();
+  const codeId = chapterIdRaw.split("-")[0].trim();
   if (!comicId || !codeId) throw new Error("comicId/chapterId 不能为空");
 
   const { images, epTitle, epNum, isVip } = await fetchChapterContent(comicId, codeId);

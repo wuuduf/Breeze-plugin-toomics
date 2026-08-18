@@ -29,9 +29,13 @@ export function extractViewerImages(html: string): string[] {
   const seen = new Set<string>();
   const out: string[] = [];
   let m: RegExpExecArray | null;
-  const re = /https:\/\/toon-g\d?\.toomics\.com\/[^\s"'<>]+/g;
+  const re = /https?:\/\/toon-g\d?\.toomics\.com\/[^\s"'<>]+|toon-g\d?\.toomics\.com\/[^\s"'<>]+/g;
   while ((m = re.exec(html)) !== null) {
-    const url = m[0];
+    let url = m[0];
+    // swc 可能吞掉正则里的 https:// 前缀，这里兜底补协议
+    if (!/^https?:\/\//.test(url)) {
+      url = "https://" + url;
+    }
     if (!seen.has(url)) {
       seen.add(url);
       out.push(url);

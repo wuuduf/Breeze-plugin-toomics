@@ -23,7 +23,7 @@ export function buildPluginInfo() {
     name: "Toomics",
     uuid: PLUGIN_ID,
     iconUrl:
-      "https://raw.githubusercontent.com/jelly717/Breeze-plugin-toomics/main/assets/logo.png",
+      "https://raw.githubusercontent.com/wuuduf/Breeze-plugin-toomics/main/assets/logo.png",
     creator: {
       name: "jelly",
       describe: "Toomics 漫画插件",
@@ -31,8 +31,8 @@ export function buildPluginInfo() {
     describe: "Toomics 全球漫画（排行榜/最新/连载中/分类/搜索/阅读）",
     version: "0.1.0",
     updateUrl:
-      "https://api.github.com/repos/jelly717/Breeze-plugin-toomics/releases/latest",
-    home: "https://github.com/jelly717/Breeze-plugin-toomics",
+      "https://api.github.com/repos/wuuduf/Breeze-plugin-toomics/releases/latest",
+    home: "https://github.com/wuuduf/Breeze-plugin-toomics",
     npmName: "breeze-plugin-toomics",
     function: [
       {

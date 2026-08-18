@@ -18,7 +18,7 @@ Toomics 全球漫画站（global.toomics.com）的 [Breeze](https://github.com/d
    ```
    https://cdn.jsdelivr.net/npm/breeze-plugin-toomics/dist/breeze-plugin-toomics.bundle.cjs
    ```
-   或从 [Releases](https://github.com/jelly717/Breeze-plugin-toomics/releases) 下载 `.bundle.cjs` 本地导入
+   或从 [Releases](https://github.com/wuuduf/Breeze-plugin-toomics/releases) 下载 `.bundle.cjs` 本地导入
 
 ## 使用
 

@@ -12,6 +12,7 @@ import {
   getSettingsBundle,
   onCookieChanged,
 } from "./settings";
+import { loginWithPassword, logoutLogin, onAuthChanged } from "./toomics-login";
 import { fetchImageBytes } from "./toomics-request";
 
 export { PLUGIN_ID } from "./common";
@@ -38,6 +39,9 @@ export default {
   getRankingFilterBundle,
   getSettingsBundle,
   getCapabilitiesBundle,
+  onAuthChanged,
   onCookieChanged,
+  loginWithPassword,
+  logoutLogin,
   clearPluginCache,
 };

@@ -5,8 +5,8 @@ import { setCookie, getCookie } from "./toomics-request";
 
 // 登录接口（邮箱账号密码）
 export async function loginWithPassword(payload: Record<string, unknown> = {}): Promise<Record<string, unknown>> {
-  let uid = String(payload?.userId ?? "").trim();
-  let upw = String(payload?.userPw ?? "").trim();
+  let uid = String(payload?.userId ?? payload?.account ?? "").trim();
+  let upw = String(payload?.userPw ?? payload?.password ?? "").trim();
   if (!uid || !upw) {
     const getV = async (k: string) => { try { const r = await pluginConfig.load(k, ""); return JSON.parse(r)?.value ?? ""; } catch { return ""; } };
     uid = await getV("account.user_id");

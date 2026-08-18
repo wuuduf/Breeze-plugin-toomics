@@ -55,7 +55,7 @@ export async function getSettingsBundle(): Promise<SettingsBundleContract> {
       ],
     },
     data: {
-      canShowUserInfo: false,
+      canShowUserInfo: true,
       values: {
         "account.user_id": savedUid,
         "account.user_pw": savedUpw,

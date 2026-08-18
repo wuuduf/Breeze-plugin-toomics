@@ -1,39 +1,58 @@
 // Toomics 网络层：fetch 封装（带 Referer / cookie / UA / 动态语言）
 import { BASE } from "./common";
-import { pluginConfig } from "breeze-plugin-kit";
+import { flutterTools, pluginConfig } from "breeze-plugin-kit";
 
 let cachedCookie = "";
 let cookieLoaded = false;
 let cachedLang: string | null = null;
 
-// 语言设置 → URL 路由前缀（en 英文 / sc 简中 / tc 繁中 / ja 日文 / ko 韩文）
-const LANG_MAP: Record<string, string> = {
-  en: "en",
-  "": "en",
-  "zh_cn": "sc",
-  "sc": "sc",
-  "cn": "sc",
-  "zh_tw": "tc",
-  "tc": "tc",
-  "tw": "tc",
-  ja: "ja",
-  jp: "ja",
-  ko: "ko",
-  kr: "ko",
-};
+// 语言设置 / 设备语言 → URL 路由前缀（en 英文 / sc 简中 / tc 繁中 / ja 日文 / ko 韩文）
+function mapLang(input: string): string {
+  const v = (input || "").toLowerCase().trim();
+  if (!v) return "en";
+  if (v === "sc" || v === "tc") return v; // 直接值
+  // locale 形式：zh / zh-CN / zh-TW / ja-JP / ko-KR / en-US
+  const main = v.split(/[-_]/)[0];
+  if (main === "zh") {
+    // zh-TW / zh-HK / zh_CN 差异：TW/HK → tc，否则默认 sc
+    const full = v.replace(/[-_]/g, "");
+    return /zh(hk|tw|hant)/.test(full) ? "tc" : "sc";
+  }
+  if (main === "ja") return "ja";
+  if (main === "ko") return "ko";
+  return "en"; // en 及其他 → 英文
+}
 
-async function getLangPrefix(): Promise<string> {
-  if (cachedLang) return cachedLang;
+async function readLanguageSetting(): Promise<string> {
   try {
     const raw = await pluginConfig.load("prefs.language", "");
     const parsed = JSON.parse(raw);
-    const choice = String(parsed?.value ?? "");
-    // 跟随系统：空值 → 默认英文（Breeze 未暴露系统语言时用 en）
-    cachedLang = LANG_MAP[choice] ?? "en";
+    return String(parsed?.value ?? "");
   } catch {
-    cachedLang = "en";
+    return "";
   }
-  return cachedLang;
+}
+
+async function getLangPrefix(): Promise<string> {
+  if (cachedLang) return cachedLang;
+  const choice = await readLanguageSetting();
+  let lang = "en";
+  if (choice) {
+    lang = mapLang(choice);
+  } else {
+    // 跟随系统：读 Breeze 运行设备系统语言
+    try {
+      const info = (await (flutterTools as any).getLocaleInfo?.()) as
+        | { language?: string; systemLocale?: string; locale?: string }
+        | undefined;
+      const sys = String(info?.systemLocale ?? info?.locale ?? info?.language ?? "");
+      lang = mapLang(sys);
+    } catch {
+      lang = "en";
+    }
+  }
+  cachedLang = lang;
+  return lang;
 }
 
 export function resetLangCache() {

@@ -1,0 +1,143 @@
+{
+  "name": "Toomics",
+  "uuid": "7c3f9a2e-5b1d-4e8a-9c4f-1d2e3f4a5b6c",
+  "iconUrl": "https://raw.githubusercontent.com/jelly717/Breeze-plugin-toomics/main/assets/logo.png",
+  "creator": {
+    "name": "jelly",
+    "describe": "Toomics 漫画插件"
+  },
+  "describe": "Toomics 全球漫画（排行榜/最新/连载中/分类/搜索/阅读）",
+  "version": "0.1.0",
+  "updateUrl": "https://api.github.com/repos/jelly717/Breeze-plugin-toomics/releases/latest",
+  "home": "https://github.com/jelly717/Breeze-plugin-toomics",
+  "npmName": "breeze-plugin-toomics",
+  "function": [
+    {
+      "id": "ranking",
+      "title": "排行榜",
+      "action": {
+        "type": "openComicList",
+        "payload": {
+          "scene": {
+            "title": "排行榜",
+            "source": "7c3f9a2e-5b1d-4e8a-9c4f-1d2e3f4a5b6c",
+            "body": {
+              "type": "pluginPagedComicList",
+              "request": {
+                "fnPath": "getRankingData",
+                "core": {},
+                "extern": {
+                  "source": "ranking"
+                }
+              }
+            },
+            "filter": {
+              "fnPath": "getRankingFilterBundle",
+              "extern": {
+                "source": "ranking"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "recent",
+      "title": "最新更新",
+      "action": {
+        "type": "openComicList",
+        "payload": {
+          "scene": {
+            "title": "最新更新",
+            "source": "7c3f9a2e-5b1d-4e8a-9c4f-1d2e3f4a5b6c",
+            "body": {
+              "type": "pluginPagedComicList",
+              "request": {
+                "fnPath": "getRankingData",
+                "core": {},
+                "extern": {
+                  "source": "recent"
+                }
+              }
+            },
+            "filter": {
+              "fnPath": "getRankingFilterBundle",
+              "extern": {
+                "source": "recent"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "ongoing",
+      "title": "连载中",
+      "action": {
+        "type": "openComicList",
+        "payload": {
+          "scene": {
+            "title": "连载中",
+            "source": "7c3f9a2e-5b1d-4e8a-9c4f-1d2e3f4a5b6c",
+            "body": {
+              "type": "pluginPagedComicList",
+              "request": {
+                "fnPath": "getRankingData",
+                "core": {},
+                "extern": {
+                  "source": "ongoing"
+                }
+              }
+            },
+            "filter": {
+              "fnPath": "getRankingFilterBundle",
+              "extern": {
+                "source": "ongoing"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "new",
+      "title": "新作上架",
+      "action": {
+        "type": "openComicList",
+        "payload": {
+          "scene": {
+            "title": "新作上架",
+            "source": "7c3f9a2e-5b1d-4e8a-9c4f-1d2e3f4a5b6c",
+            "body": {
+              "type": "pluginPagedComicList",
+              "request": {
+                "fnPath": "getRankingData",
+                "core": {},
+                "extern": {
+                  "source": "new"
+                }
+              }
+            },
+            "filter": {
+              "fnPath": "getRankingFilterBundle",
+              "extern": {
+                "source": "new"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "search",
+      "title": "搜索",
+      "action": {
+        "type": "openSearch",
+        "payload": {
+          "source": "7c3f9a2e-5b1d-4e8a-9c4f-1d2e3f4a5b6c",
+          "keyword": ""
+        }
+      }
+    }
+  ]
+}

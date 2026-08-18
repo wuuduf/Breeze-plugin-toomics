@@ -1,7 +1,7 @@
 {
-  "tag_name": "v0.3.3",
+  "tag_name": "v0.3.4",
   "assets": [
-    { "name": "breeze-plugin-toomics.bundle.cjs.br", "browser_download_url": "https://cdn.jsdelivr.net/gh/wuuduf/Breeze-plugin-toomics@v0.3.3/dist/breeze-plugin-toomics.bundle.cjs.br" },
-    { "name": "breeze-plugin-toomics.bundle.cjs", "browser_download_url": "https://cdn.jsdelivr.net/gh/wuuduf/Breeze-plugin-toomics@v0.3.3/dist/breeze-plugin-toomics.bundle.cjs" }
+    { "name": "breeze-plugin-toomics.bundle.cjs.br", "browser_download_url": "https://github.com/wuuduf/Breeze-plugin-toomics/releases/download/v0.3.4/breeze-plugin-toomics.bundle.cjs.br" },
+    { "name": "breeze-plugin-toomics.bundle.cjs", "browser_download_url": "https://github.com/wuuduf/Breeze-plugin-toomics/releases/download/v0.3.4/breeze-plugin-toomics.bundle.cjs" }
   ]
 }

@@ -5,88 +5,100 @@ import { setCookie, getCookie } from "./toomics-request";
 
 // 登录接口（邮箱账号密码）
 export async function loginWithPassword(payload: Record<string, unknown> = {}): Promise<Record<string, unknown>> {
-  const userId = String(payload?.userId ?? "").trim();
-  const userPw = String(payload?.userPw ?? "").trim();
-
-  // 尝试从设置读票据（onAuthChanged 已存则用）
-  let uid = userId;
-  let upw = userPw;
+  let uid = String(payload?.userId ?? "").trim();
+  let upw = String(payload?.userPw ?? "").trim();
   if (!uid || !upw) {
-    const r1 = await pluginConfig.load("account.user_id", "");
-    const r2 = await pluginConfig.load("account.user_pw", "");
-    try { uid = JSON.parse(r1)?.value ?? ""; } catch {}
-    try { upw = JSON.parse(r2)?.value ?? ""; } catch {}
+    const getV = async (k: string) => { try { const r = await pluginConfig.load(k, ""); return JSON.parse(r)?.value ?? ""; } catch { return ""; } };
+    uid = await getV("account.user_id");
+    upw = await getV("account.user_pw");
   }
-  uid = String(uid).trim();
-  upw = String(upw).trim();
+  uid = uid.trim(); upw = upw.trim();
   if (!uid || !upw) {
     await flutterTools.showToast({ message: "请先填写账号密码", level: "warning", seconds: 2 });
     return { ok: false, message: "缺少账号或密码" };
   }
 
-  const headers: Record<string, string> = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/137.0.0.0",
-    "Content-Type": "application/x-www-form-urlencoded",
-    "X-Requested-With": "XMLHttpRequest",
-    Referer: `${BASE}/en`,
-    Accept: "application/json, text/javascript, */*; q=0.01",
-  };
-  // 带上已存 cookie（若宿主未自动管理）
+  const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/137.0.0.0";
   const existing = await getCookie();
-  if (existing) headers.Cookie = existing;
 
-  const body = new URLSearchParams({
-    user_id: uid,
-    user_pw: upw,
-    keep_cookie: "Y",
-    access_term: "1",
-    private_term: "1",
-  }).toString();
-
-  const res = await fetch(`${BASE}/en/auth/layer_login`, {
-    method: "POST",
-    headers,
-    body,
-    signal: AbortSignal.timeout(15000),
-  });
-
-  let json: Record<string, unknown> = {};
-  try { json = await res.json(); } catch { /* 非 JSON */ }
-
-  const code = String(json?.code ?? "");
-  const ret = String(json?.ret ?? "");
-
-  if (code === "200") {
-    // 尝试把登录产生的 cookie 存起来（若宿主未自动管理）
-    let setCookies = "";
-    try { setCookies = res.headers.get("set-cookie") ?? ""; } catch {}
-    if (setCookies) {
-      setCookie(existing ? existing + "; " + setCookies.split(";")[0] : setCookies.split(";")[0]);
-    }
-    await flutterTools.showToast({ message: "✅ 登录成功", level: "success", seconds: 2 });
-    return { ok: true, message: "登录成功", userId: ret };
+  // 1) 先 GET 首页建立会话（若宿主自动管理 cookie，这步写入 GTOOMICScisession）
+  try {
+    await fetch(`${BASE}/en`, {
+      headers: { "User-Agent": UA, Accept: "text/html", ...(existing ? { Cookie: existing } : {}) },
+      signal: AbortSignal.timeout(15000),
+    });
+  } catch (e) {
+    // 忽略 GET 失败，继续尝试登录
   }
 
-  const msg = ret || "登录失败";
-  await flutterTools.showToast({ message: "❌ " + msg, level: "error", seconds: 3 });
-  return { ok: false, message: msg };
+  // 2) POST layer_login
+  const bodyStr =
+    `user_id=${encodeURIComponent(uid)}&user_pw=${encodeURIComponent(upw)}` +
+    `&keep_cookie=Y&access_term=1&private_term=1`;
+
+  let res;
+  try {
+    res = await fetch(`${BASE}/en/auth/layer_login`, {
+      method: "POST",
+      headers: {
+        "User-Agent": UA,
+        "Content-Type": "application/x-www-form-urlencoded",
+        "X-Requested-With": "XMLHttpRequest",
+        Referer: `${BASE}/en`,
+        Accept: "application/json, text/javascript, */*; q=0.01",
+        ...(existing ? { Cookie: existing } : {}),
+      },
+      body: bodyStr,
+      signal: AbortSignal.timeout(15000),
+    });
+  } catch (e) {
+    const msg = "网络异常: " + String((e as any)?.message ?? e).slice(0, 120);
+    await flutterTools.showToast({ message: "❌ " + msg, level: "error", seconds: 4 });
+    return { ok: false, message: msg };
+  }
+
+  const status = res.status;
+  const rawText = await res.text().catch(() => "");
+  let code = "";
+  let ret = "";
+  let isJson = false;
+  try {
+    const j = JSON.parse(rawText);
+    isJson = true;
+    code = String(j?.code ?? "");
+    ret = String(j?.ret ?? "");
+  } catch {}
+
+  if (code === "200") {
+    // 尝试存登录 cookie（若宿主未自动管理，这里把响应 set-cookie 手动存）
+    try {
+      const sc = res.headers.get("set-cookie") ?? "";
+      if (sc) {
+        const first = sc.split(";")[0];
+        setCookie(existing ? existing + "; " + first : first);
+      }
+    } catch {}
+    await flutterTools.showToast({ message: "✅ 登录成功", level: "success", seconds: 2 });
+    return { ok: true, message: "登录成功", userId: ret, status, isJson };
+  }
+
+  const detail = ret || rawText.slice(0, 160).replace(/\s+/g, " ") || String(status);
+  const msg = `登录失败 (HTTP ${status}${isJson ? "" : " 非JSON"})`;
+  await flutterTools.showToast({ message: "❌ " + msg + "\n" + detail.slice(0, 120), level: "error", seconds: 5 });
+  return { ok: false, message: msg, detail, status, isJson, raw: rawText.slice(0, 200) };
 }
 
-/** 设置字段变更回调：账号/密码任一变化后保存并触发登录 */
+/** 设置字段变更回调 */
 export async function onAuthChanged(payload: Record<string, unknown> = {}): Promise<Record<string, unknown>> {
   const p = (payload ?? {}) as any;
   const key = String(p.key ?? "");
   const value = p.value ?? "";
   if (key) {
     await pluginConfig.save(key, JSON.stringify({ value }));
-    // 账号或密码都填了 → 尝试登录
-    const r1 = await pluginConfig.load("account.user_id", "");
-    const r2 = await pluginConfig.load("account.user_pw", "");
-    let uid = "", upw = "";
-    try { uid = JSON.parse(r1)?.value ?? ""; } catch {}
-    try { upw = JSON.parse(r2)?.value ?? ""; } catch {}
+    const getV = async (k: string) => { try { const r = await pluginConfig.load(k, ""); return JSON.parse(r)?.value ?? ""; } catch { return ""; } };
+    const uid = await getV("account.user_id");
+    const upw = await getV("account.user_pw");
     if (uid && upw) {
-      // 防抖：等另一个字段也填完
       await new Promise((r) => setTimeout(r, 800));
       return loginWithPassword({ userId: uid, userPw: upw });
     }
@@ -94,7 +106,6 @@ export async function onAuthChanged(payload: Record<string, unknown> = {}): Prom
   return { ok: true };
 }
 
-/** 退出登录（清会话） */
 export async function logoutLogin(): Promise<Record<string, unknown>> {
   setCookie("");
   await pluginConfig.save("account.user_id", JSON.stringify({ value: "" }));

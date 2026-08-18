@@ -29,7 +29,7 @@ export function buildPluginInfo() {
       describe: "Toomics 漫画插件",
     },
     describe: "Toomics 全球漫画（排行榜/最新/连载中/分类/搜索/阅读）",
-    version: "0.3.0",
+    version: "0.3.1",
     updateUrl:
       "https://api.github.com/repos/wuuduf/Breeze-plugin-toomics/releases/latest",
     home: "https://github.com/wuuduf/Breeze-plugin-toomics",

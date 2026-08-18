@@ -80,40 +80,36 @@ export function parseToonPage(html: string): {
   const catM = [...html.matchAll(/class="type\d+"[^>]*>([\s\S]*?)<\/span>/g)];
 
   const episodes: ToomicsEpisode[] = [];
-  // 章节条目: <li class="normal_ep"> <a onclick="...detail/code/{code}/ep/{ep}/toon/{toon}" data-e data-c data-v>
-  //   状态: coin-type1 FFREE(免费) / coin-type5 VVIP(付费)
-  const epRe =
-    /<li class="normal_ep[^"]*"[^>]*>[\s\S]*?detail\/code\/(\d+)\/ep\/(\d+)\/toon\/(\d+)[\s\S]*?cell-title[\s\S]*?<strong[^>]*>([\s\S]*?)<\/strong>[\s\S]*?(FFREE|VIP ONLY|VVIP|FREE|VIP)/g;
-  let m: RegExpExecArray | null;
-  while ((m = epRe.exec(html)) !== null) {
-    const flag = m[5];
+  // 章节条目: detail/code/{code}/ep/{ep}/toon/{toon}
+  // 注意：不能用带 <li ...> 锚定的正则（swc 编译会吃掉 < 开头的字面量），
+  // 这里用无尖括号的全局匹配 + 从该位置向后取窗口判断 免费/VIP + 标题
+  const epRe = /detail\/code\/(\d+)\/ep\/(\d+)\/toon\/(\d+)/g;
+  const seen = new Set<string>();
+  let em: RegExpExecArray | null;
+  while ((em = epRe.exec(html)) !== null) {
+    const codeId = em[1];
+    const epNum = em[2];
+    const toonId = em[3];
+    const key = `${codeId}-${epNum}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    // 取该匹配位置向后的窗口（~800 字符）判断免费/VIP + 标题
+    const win = html.slice(em.index, em.index + 900);
+    const flagM = win.match(/FFREE|VIP ONLY|VVIP|VIP|FREE/);
+    const flag = flagM ? flagM[0] : "VIP";
+    const titleM = win.match(/>([^<>]{1,80})<\//);
+    const title = titleM ? decodeHtml(titleM[1].trim()) : `Episode ${epNum}`;
+    const isFree = flag === "FFREE" || flag === "FREE";
     episodes.push({
-      codeId: m[1],
-      epNum: m[2],
-      toonId: m[3],
-      title: decodeHtml(m[4].trim()),
-      isFree: flag === "FFREE" || flag === "FREE",
-      isVip: flag === "VIP ONLY" || flag === "VVIP" || flag === "VIP",
+      codeId,
+      epNum,
+      toonId,
+      title: title && title !== `Episode ${epNum}` ? title : `Episode ${epNum}`,
+      isFree,
+      isVip: !isFree,
       rating: "",
       date: "",
     });
-  }
-  // 宽松回退：只匹配 code/ep/toon + 附近 FFREE/VIP
-  if (!episodes.length) {
-    const looseRe =
-      /detail\/code\/(\d+)\/ep\/(\d+)\/toon\/(\d+)[\s\S]{0,1500}?(FFREE|VIP ONLY|VVIP|FREE|VIP)/g;
-    while ((m = looseRe.exec(html)) !== null) {
-      episodes.push({
-        codeId: m[1],
-        epNum: m[2],
-        toonId: m[3],
-        title: `Episode ${m[2]}`,
-        isFree: m[4] === "FFREE" || m[4] === "FREE",
-        isVip: m[4] === "VIP ONLY" || m[4] === "VVIP" || m[4] === "VIP",
-        rating: "",
-        date: "",
-      });
-    }
   }
 
   return {

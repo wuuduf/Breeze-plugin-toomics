@@ -1,4 +1,7 @@
 node_modules/
-dist/
+dist/*.log
+# keep bundle for jsdelivr
+!dist/*.bundle.cjs
+!dist/*.bundle.cjs.br
 *.log
 .DS_Store

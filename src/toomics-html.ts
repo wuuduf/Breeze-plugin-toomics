@@ -30,7 +30,10 @@ export function parseComicList(html: string): ToomicsComicCard[] {
     if (!toonM) continue;
     const titleM = li.match(/<h4[^>]*class="title"[^>]*>([\s\S]*?)<\/h4>/);
     const writerM = li.match(/<p[^>]*class="writer"[^>]*>([\s\S]*?)<\/p>/);
-    const imgM = li.match(/<img[^>]*src="([^"]*thumb[^"]*)"[^>]*>/);
+    // 封面懒加载：真实 URL 在 data-original（src 是 base64 占位）
+    const imgM =
+      li.match(/data-original="([^"]*thumb[^"]*)"/) ||
+      li.match(/<img[^>]*src="([^"]*thumb[^"]*)"[^>]*>/);
     const descM = li.match(/<div class="text"><!--([\s\S]*?)--><\/div>/);
     const finM = li.match(/ico_fin[^>]*>\s*(End|完)/);
     const remainM = li.match(/section_remai[^>]*>([\d.]+)</);
@@ -81,8 +84,8 @@ export function parseToonPage(html: string): {
 
   const episodes: ToomicsEpisode[] = [];
   // 章节条目: detail/code/{code}/ep/{ep}/toon/{toon}
-  // 注意：不能用带 <li ...> 锚定的正则（swc 编译会吃掉 < 开头的字面量），
-  // 这里用无尖括号的全局匹配 + 从该位置向后取窗口判断 免费/VIP + 标题
+  // 注意不能用带 <li ...> 锚定（swc 正则 bug），用无尖括号全局匹配 + 窗口
+  // 免费/VIP 判定：coin-type1/cointype01 = 免费，coin-type5/cointype05 = VIP
   const epRe = /detail\/code\/(\d+)\/ep\/(\d+)\/toon\/(\d+)/g;
   const seen = new Set<string>();
   let em: RegExpExecArray | null;
@@ -93,20 +96,18 @@ export function parseToonPage(html: string): {
     const key = `${codeId}-${epNum}`;
     if (seen.has(key)) continue;
     seen.add(key);
-    // 取该匹配位置向后的窗口（~800 字符）判断免费/VIP + 标题
-    const win = html.slice(em.index, em.index + 900);
-    const flagM = win.match(/FFREE|VIP ONLY|VVIP|VIP|FREE/);
-    const flag = flagM ? flagM[0] : "VIP";
-    const titleM = win.match(/>([^<>]{1,80})<\//);
-    const title = titleM ? decodeHtml(titleM[1].trim()) : `Episode ${epNum}`;
-    const isFree = flag === "FFREE" || flag === "FREE";
+    const win = html.slice(em.index, em.index + 2600);
+    // 免费：cointype01/coin-type1；VIP：cointype05/coin-type5（取章节范围内第一个）
+    const cm1 = win.match(/cointype0[15]/)?.[0];
+    const isFree = cm1 === "cointype01";
+    const isVip = cm1 === "cointype05" || /VIP ONLY|VVIP/.test(win);
     episodes.push({
       codeId,
       epNum,
       toonId,
-      title: title && title !== `Episode ${epNum}` ? title : `Episode ${epNum}`,
+      title: `第 ${epNum} 话`,
       isFree,
-      isVip: !isFree,
+      isVip: isVip || !isFree,
       rating: "",
       date: "",
     });

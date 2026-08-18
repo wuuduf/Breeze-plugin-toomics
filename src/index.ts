@@ -11,6 +11,7 @@ import {
   getCapabilitiesBundle,
   getSettingsBundle,
   onCookieChanged,
+  onLangChanged,
 } from "./settings";
 import { loginWithPassword, logoutLogin, onAuthChanged } from "./toomics-login";
 import { fetchImageBytes } from "./toomics-request";
@@ -44,6 +45,7 @@ export default {
   getCapabilitiesBundle,
   onAuthChanged,
   onCookieChanged,
+  onLangChanged,
   loginWithPassword,
   logoutLogin,
   clearPluginCache,
